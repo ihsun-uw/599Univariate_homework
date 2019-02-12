@@ -1,0 +1,63 @@
+## Course: Visual Analytics for Policy and Management
+###Univariate Homework 
+####Group 3: Dave Coomes, Quinhas Fernndes, Isabella Sun
+
+## 
+
+First we load the necessary libraries and bring in the data for analysis
+```{r}
+library(foreign)
+library(haven)
+library(ggplot2)
+
+link='https://github.com/quinhasf/pubpol-599/raw/master/ape_analysis.dta'
+chw_fp <- read_dta(url(link)) #download from link and save in datafram named chw_fp
+
+```
+
+Translate information into a dataframe for ggplot 
+```{r}
+#Create new dataframe with just the relevant variables
+LoliToPlot = chw_fp[,c('province','ape_contrib')]
+
+#Order data frame
+OrderedLoliToPlot=LoliToPlot[order(LoliToPlot$ape_contrib),]
+
+#Add a new variable and calculate distance from mean
+OrderedLoliToPlot$gap=OrderedLoliToPlot$ape_contrib-mean(OrderedLoliToPlot$ape_contrib)
+
+#Another variable indicating whether province is above or below the mean
+OrderedLoliToPlot$PositiveGap=ifelse(OrderedLoliToPlot$gap>0,"above average","below average")
+
+```
+
+Misc table elements like title and source 
+```{r}
+title_loli= "Where is the contribution of community health organizations below average?"
+source= "Source: Mozambique Health Information System"
+```
+
+Create Plot
+```{r}
+base = ggplot(OrderedLoliToPlot, aes(province,gap,color=PositiveGap,
+                              label = round(gap,2))) 
+lolliplot1 = base + geom_segment(aes(y = 0, 
+                                   x = province, 
+                                   yend = gap, 
+                                   xend = province), color = "gray") 
+lolliplot2=lolliplot1 + geom_point() 
+lolliplot3= lolliplot2 + scale_x_discrete(limits=OrderedLoliToPlot$province) 
+
+lolliplot5 = lolliplot3 + geom_text(nudge_x=0.45, show.legend = FALSE) 
+
+lolliplot6 = lolliplot5 + labs(title=title_loli,
+                     x =NULL, 
+                     y = NULL,
+                     caption = source)
+
+lolliplot7 = lolliplot6 + theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust=1))
+
+
+lolliplot7
+```
+
