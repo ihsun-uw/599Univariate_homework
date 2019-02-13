@@ -3,61 +3,81 @@
 ####Group 3: Dave Coomes, Quinhas Fernndes, Isabella Sun
 
 ## 
+##
 
-First we load the necessary libraries and bring in the data for analysis
-```{r}
+First we load libraries and bring in the data
+```{r setup}
+library(ggplot2)
 library(foreign)
 library(haven)
-library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE, warning=TRUE, message=TRUE)
 
-link='https://github.com/quinhasf/pubpol-599/raw/master/ape_analysis.dta'
-chw_fp <- read_dta(url(link)) #download from link and save in datafram named chw_fp
+link="https://github.com/quinhasf/pubpol-599/raw/master/ape_analysis.dta"
+
+chw_fp <- read_dta(url(link))
+```
+
+Create data frame for ggplot to plot 
+```{r ggplot}
+chw_pf1 <- data.frame(chw_fp[c('province', 'ape_contrib')])
+
+tableFreq=as.data.frame(chw_pf1)
+
+names(tableFreq)=c("province","ape_contrib")
+
+tableFreqO=tableFreq[order(tableFreq$ape_contrib),]
+
+tableFreqO$gap=tableFreqO$ape_contrib-10
+
+tableFreqO$Target=ifelse(tableFreqO$gap>0,"Above Target","Below Target")
 
 ```
 
-Translate information into a dataframe for ggplot 
+Misc table elements: title, subtitle, caption
 ```{r}
-#Create new dataframe with just the relevant variables
-LoliToPlot = chw_fp[,c('province','ape_contrib')]
 
-#Order data frame
-OrderedLoliToPlot=LoliToPlot[order(LoliToPlot$ape_contrib),]
+loli_title = "Mozambique Community Health Workers contribuition on Family Planning"
 
-#Add a new variable and calculate distance from mean
-OrderedLoliToPlot$gap=OrderedLoliToPlot$ape_contrib-mean(OrderedLoliToPlot$ape_contrib)
+loli_subtitle = "2017 province level gap on CHW contribuition"
 
-#Another variable indicating whether province is above or below the mean
-OrderedLoliToPlot$PositiveGap=ifelse(OrderedLoliToPlot$gap>0,"above average","below average")
+loli_caption = "Fig.1: Represents the contirbution of each province to achieve the 10% target (centered at 0)
+in 2017 (Gap analysis). Provinces are ploted from low to high perfomance.
+
+Source:Health Information System"
 
 ```
 
-Misc table elements like title and source 
-```{r}
-title_loli= "Where is the contribution of community health organizations below average?"
-source= "Source: Mozambique Health Information System"
-```
-
-Create Plot
-```{r}
-base = ggplot(OrderedLoliToPlot, aes(province,gap,color=PositiveGap,
-                              label = round(gap,2))) 
-lolliplot1 = base + geom_segment(aes(y = 0, 
+Create Loliplot
+```{r lolliplot}
+base = ggplot(tableFreqO, aes(province,gap,color=Target,
+                              label = round(gap,1))) 
+lolliplot1=base + geom_segment(aes(y =0, 
                                    x = province, 
                                    yend = gap, 
-                                   xend = province), color = "gray") 
-lolliplot2=lolliplot1 + geom_point() 
-lolliplot3= lolliplot2 + scale_x_discrete(limits=OrderedLoliToPlot$province) 
+                                   xend = province)) 
+lolliplot2=lolliplot1 + geom_point()
 
-lolliplot5 = lolliplot3 + geom_text(nudge_x=0.45, show.legend = FALSE) 
+lolliplot3= lolliplot2 + scale_x_discrete(limits=tableFreqO$province) 
 
-lolliplot6 = lolliplot5 + labs(title=title_loli,
-                     x =NULL, 
-                     y = NULL,
-                     caption = source)
+lollitplot4 = lolliplot3 + geom_text(size=3, nudge_x=0.35, nudge_y=0.1,show.legend = FALSE) +
+              labs(title = loli_title,
+                   subtitle = loli_subtitle,
+                    x ="Province", 
+                    y = "% points of the FP GAP",
+                    caption = loli_caption) +
+            theme(panel.background = element_rect(fill = "gray98",
+                                                    colour = "black"),
+                    plot.caption = element_text(hjust = 0), 
+                    plot.title = element_text(hjust = 0.5),
+                    plot.subtitle = element_text(hjust=0.5),
+                    legend.box.just = c("right","center"), 
+                    axis.text.x = element_text(size=7, angle = 60, vjust = 1, hjust=1)) +
+              geom_hline(yintercept=0,
+                    linetype="dashed",
+                    color = "black",
+                    size= 0.9,
+                    alpha= 0.8)
 
-lolliplot7 = lolliplot6 + theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust=1))
 
-
-lolliplot7
+lollitplot4 
 ```
-
