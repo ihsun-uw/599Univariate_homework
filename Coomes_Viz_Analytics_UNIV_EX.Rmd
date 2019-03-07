@@ -1,0 +1,558 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+<br> 
+<center><img src="http://i.imgur.com/sSaOozN.png" width="500"></center>
+
+## Course: Visual Analytics for Policy and Management
+
+### David Coomes, Univariate Exercises
+#### February 20, 2019
+
+##
+##
+_____
+
+
+
+```{r getData, include=FALSE}
+
+#setting the chunk options
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE)
+
+link='https://github.com/EvansDataScience/VisualAnalytics_2_tabularData/raw/master/data/eduwa.rda'
+
+#getting the data TABLE from the file in the cloud:
+load(file=url(link))
+```
+
+
+
+```{r freqTab_abs, include=FALSE}
+# absolute values
+table(eduwa$LocaleType,exclude = 'nothing')
+```
+
+```{r freqTab_rel, include=FALSE}
+# relative values
+absoluteT=table(eduwa$LocaleType,exclude = 'nothing')
+prop.table(absoluteT)
+```
+
+
+```{r pieBasic, include=FALSE}
+# the pie plots the table:
+ToPlot=prop.table(absoluteT)
+
+```
+
+
+```{r namesFre_NA, include=FALSE}
+names(ToPlot)
+```
+
+
+```{r alterTable, include=FALSE}
+names(ToPlot)[5]='Unknown'
+```
+
+
+```{r pieTitle_question, include=FALSE}
+# the pie plots the table:
+titleText='Where are Public Schools located in WA in 2019?'
+sourceText='Source: US Department of Education'
+
+```
+
+
+```{r pieTitle_guide, include=FALSE}
+# the pie plots the table:
+titleText2='WA still has schools locations unknown \n (info from 2018)'
+
+```
+
+
+```{r pieTitle_suggestion, include=FALSE}
+# the pie plots the table:
+titleText3='WA needs to fully categorize school locations\n(info from 2018)'
+
+#DMC - the \n moves the rest of the title to the next line
+
+```
+
+
+```{r 100convert, include=FALSE}
+ToPlot*100
+```
+
+
+```{r rainbowColor, include=FALSE}
+# details:
+ToPlot=ToPlot*100 # preparing labels
+
+```
+
+
+
+```{r barplot2, include=FALSE}
+paletteHereNew=c('gray') # just one color
+```
+
+
+```{r ggplot1, include=FALSE}
+tableFreq=as.data.frame(ToPlot)
+names(tableFreq)=c("locale","pct")
+#you have:
+tableFreq
+```
+
+
+```{r ggplot_call, include=FALSE}
+library(ggplot2)
+```
+
+
+```{r ggplot_base, include=FALSE}
+#base GGPLOT2 starts with a "base", telling WHAT VARIABLES TO PLOT
+base= ggplot(data = tableFreq, 
+            aes(x = locale,
+                y = pct)) 
+
+```
+
+
+```{r bar_gg, include=FALSE}
+plot1 = base + geom_bar(fill ="gray",
+                        stat = 'identity') # y is just what it is!
+#plot1
+```
+
+
+```{r title_gg, include=FALSE}
+plot2 = plot1 + labs(title=titleText,
+                     x = NULL, 
+                     y = NULL,
+                     caption = sourceText)
+plot2
+
+```
+
+
+```{r refl_gg, include=FALSE}
+plot3 = plot2 + geom_hline(yintercept = 25, #where
+                           linetype="dashed", 
+                           size=1.5, #thickness
+                           alpha=0.5) #transparency
+plot3
+```
+
+
+```{r units_gg, include=FALSE}
+library(scales)
+
+# customize Y axis
+plot4 = plot3 + scale_y_continuous(breaks=c(0,10, 25,40,50),
+                                 limits = c(0, 50), # expand = c(0, 0),
+                                 labels=scales::unit_format(suffix = "%")) 
+plot4
+```
+
+```{r title2_gg, include=FALSE}
+plot5 = plot4 + theme(panel.background = element_rect(fill = "white",
+                                                    colour = "grey50"),
+                    plot.caption = element_text(hjust = 0), # default was 1
+                    plot.title = element_text(hjust = 0.5))
+plot5
+```
+
+
+```{r annot_gg, include=FALSE}
+
+plot6 = plot5 + geom_text(aes(
+                            y = pct ,
+                            label = paste0(round(pct,2), '%')),
+                        vjust=1, # if flipping 'hjust'
+                        size = 3)
+# wanna flip the plot?
+#plot6 #+ coord_flip()
+
+
+```
+
+
+
+```{r orderFor_gg, include=FALSE}
+tableFreq[order(-tableFreq$pct),]
+```
+
+
+
+
+####**Exercise 1:** Reproducing the basic plot using ggplot
+
+```{r ggplot_new, include=TRUE}
+
+plot7=plot6 + coord_flip() + aes(x=reorder(locale, pct))
+plot7
+
+
+```
+
+
+
+```{r lolli_gg, include=FALSE}
+base = ggplot(tableFreq, aes(x=locale,pct)) 
+lolliplot1=base + geom_segment(aes(y = 0, 
+                                   x = locale, 
+                                   yend = pct, 
+                                   xend = locale), color = "grey50") 
+lolliplot1 + geom_point()
+```
+
+```{r lolli_ord, include=FALSE, results='hide'}
+tableFreq[order(tableFreq$pct),]
+```
+
+```{r lolli_ord_gg, include=FALSE}
+
+# reordering DF steps:
+tableFreqO=tableFreq[order(tableFreq$pct),]
+
+
+base = ggplot(tableFreqO, aes(locale,pct)) 
+lolliplot1=base + geom_segment(aes(y = 0, 
+                                   x = locale, 
+                                   yend = pct, 
+                                   xend = locale), color = "gray") 
+lolliplot2 = lolliplot1 + geom_point()
+lolliplot2 + scale_x_discrete(limits=tableFreqO$locale) # key element
+```
+
+
+```{r lolli_axis_gg, include=FALSE}
+# new variable
+tableFreqO$gap=tableFreqO$pct-25
+
+# plot the new variable
+base = ggplot(tableFreqO, aes(locale,gap)) 
+
+lolliplot1=base + geom_segment(aes(y = 0, 
+                                   x = locale, 
+                                   yend = gap, 
+                                   xend = locale), color = "gray") 
+lolliplot2 = lolliplot1 + geom_point()
+lolliplot2 + scale_x_discrete(limits=tableFreqO$locale) # key element
+
+```
+
+```{r lolli_gg_color, include=FALSE}
+# a new column for color
+tableFreqO$PositiveGap=ifelse(tableFreqO$gap>0,T,F)
+
+# add new aesthetics 'color'
+base = ggplot(tableFreqO, aes(locale,gap,
+                              color=PositiveGap)) #change
+lolliplot1=base + geom_segment(aes(y = 0, 
+                                   x = locale, 
+                                   yend = gap, 
+                                   xend = locale), color = "gray") 
+lolliplot2 = lolliplot1 + geom_point()
+lolliplot2 + scale_x_discrete(limits=tableFreqO$locale) # key element
+```
+
+```{r lolli_annot_gg, include=FALSE}
+# a new column for color
+tableFreqO$PositiveGap=ifelse(tableFreqO$gap>0,T,F)
+
+base = ggplot(tableFreqO, aes(locale,gap,color=PositiveGap,
+                              label = round(gap,3))) #  change
+lolliplot1=base + geom_segment(aes(y = 0, 
+                                   x = locale, 
+                                   yend = gap, 
+                                   xend = locale), color = "gray") 
+lolliplot2=lolliplot1 + geom_point() 
+lolliplot3= lolliplot2 + scale_x_discrete(limits=tableFreqO$locale) 
+# annotating and moving the text on the horizontal
+lolliplot3 + geom_text(nudge_x=0.3) 
+
+```
+
+```{r nudge_gg, include=FALSE}
+lolliplot3 + geom_text(nudge_x=0.3,show.legend = FALSE) 
+```
+
+
+
+####**Exercise 2:** Complete adding the elements missing in the last plot
+
+```{r exercise_2, include=TRUE}
+
+titleText = "Where are schools located in WA in 2019?"
+
+lolliplot4 = lolliplot3 + labs(title=titleText,
+                     x = "Location", 
+                     y = "Gap (%)",
+                     caption = sourceText)
+
+lolliplot4 + geom_text(nudge_x=0.3,show.legend = FALSE) + theme(panel.background = element_rect(fill = "gray98",
+                                                    colour = "black"),
+                    plot.caption = element_text(hjust = 0), # default was 1
+                    plot.title = element_text(hjust = 0.5)) +
+        
+                    geom_hline(yintercept=0,
+                               linetype="dashed",
+                               color="black",
+                               size=0.9,
+                               alpha=0.8)
+
+```
+
+
+```{r boxplot_gg, include=FALSE}
+# boxplots do not use frequency tables
+
+# as.numeric produces turns levels of the factor into numbers
+box1 = ggplot(eduwa, aes(y=as.numeric(High.Grade),x='')) 
+box1 = box1 + geom_boxplot() + coord_flip() # to show it horizontally
+
+box1
+```
+
+
+```{r boxplot_axis_labels, include=FALSE}
+# the labels use the original ordinal levels
+ordLabels= levels(eduwa$High.Grade)
+
+box2 = box1 + scale_y_continuous(labels=ordLabels,breaks=1:15)
+box2
+```
+
+
+```{r box_quarts, include=FALSE}
+#get positions
+# using 'ggplot_build'
+pos_q1=     ggplot_build(box2)$data[[1]]$lower
+pos_median= ggplot_build(box2)$data[[1]]$middle
+pos_q3=     ggplot_build(box2)$data[[1]]$upper
+
+# using
+levels(eduwa$High.Grade)[c(pos_q1,pos_median,pos_q3)]
+```
+
+
+```{r advancedTable, warning=FALSE,results='asis', eval=FALSE, include=FALSE}
+#DMC adding
+#install.packages("summarytools")
+library(summarytools)
+freq(eduwa$High.Grade,style = 'rmarkdown')
+```
+
+
+####**Exercise 3:** Complete adding the elements missing in the box plot
+
+
+```{r HW_3, include=TRUE}
+
+#box2
+title="Box plot of maximum grade in WA"
+
+box3 = box2 + labs(title=title,
+                   x="",
+                   y="Grade level")
+
+box4 = box3 + theme(plot.title = element_text(hjust = 0.5),
+                    panel.background = element_rect(fill = "white"))
+
+box4
+
+```
+
+
+
+
+####**Exercise 4:** Histogram of free lunch
+
+
+```{r hist_freelunch, include=TRUE, echo=FALSE}
+
+
+dataHist=hist(eduwa$Free.Lunch)
+
+#hist(eduwa$Free.Lunch, labels=T, xlab="Free Lunch", xaxt="n")
+#axis(side=1, at=dataHist$breaks) # showing axis labels better
+
+
+```
+
+<!-- commenting this chunk out - i don't think we need it
+
+Let's analyze the variable _Student.Teacher.Ratio_, but organized by county:
+
+```{r tapply,  include=FALSE}
+# tapply(variable,group,functionToApply)
+tapply(eduwa$Student.Teacher.Ratio, eduwa$County, mean)
+
+# DMC - If there is one missing value, then the mean will return missing
+
+```
+
+Above, I tried to compute the mean for each county, but the function _mean()_ outputs a missing value (_NA_) as the result when there is one _NA_ in the column:
+
+```{r removeMissing,  include=FALSE}
+# strategy 1: remove missing before computing function: na.rm=T
+tapply(eduwa$Student.Teacher.Ratio, eduwa$County, mean,na.rm=T)
+
+```
+
+Of course, you can clean first:
+
+```{r removeMissing2, include=FALSE}
+# strategy 2: 
+eduwa4=eduwa[complete.cases(eduwa$Student.Teacher.Ratio),]
+
+tapply(eduwa4$Student.Teacher.Ratio, 
+       eduwa4$County, 
+       mean)
+```
+
+Great!
+
+Now let me plot a histogram of those means:
+
+```{r histMeans, include=FALSE}
+# keeping strategy 2: 
+meanValues=tapply(eduwa4$Student.Teacher.Ratio, 
+                  eduwa4$County, 
+                  mean)
+hist(meanValues)
+```
+
+Let's compute some statistics:
+```{r summaryMeans, include=FALSE}
+summary(meanValues)
+```
+
+You can use that info, for example, to plot the mean as a reference line:
+
+```{r plotMeans, include=FALSE}
+#reference line
+hist(meanValues)
+abline(v=mean(meanValues),lty=3,lwd=3,col='blue')
+```
+
+Measurements are continuous values, then a **density** plot is more appealing to its nature:
+
+```{r density, include=FALSE}
+
+mvDense=density(meanValues)
+
+plot(mvDense,main="Average student to teacher ratio per county in WA",col='black',xlab=NA)
+
+abline(v=mean(meanValues),lty=3,lwd=3,col='blue') #mean
+abline(v=median(meanValues),lty=3,lwd=3,col='red')#median
+legend(x="right",
+       legend=c('mean','median'),
+       fill = c('blue','red'),bty = 'n') #no box in the legend
+```
+
+A box plot is always welcome, specially considering that it does not need reference lines. Take a look:
+```{r bixplotMeasurement, include=FALSE}
+
+bp=boxplot(meanValues,horizontal = T,ylim=c(5,30))
+```
+
+Our plots for the mean values have a more symmetrical shape. This happens when you get mean values of groups, showing a tendency towards a bell-shaped distribution, which is ideally known as the _Gauss_ or _Normal_  distribution.
+
+Notice also that boxplots serve to detect **atypical** values (outliers), which I saved in _bp_: 
+```{r outliers, include=FALSE}
+bp$out
+```
+
+We could annotate the boxplot like this:
+```{r boxplt_annotate, include=FALSE}
+
+boxplot(meanValues,horizontal = T,ylim=c(5,30))
+text(x= 10, y= 0.8, labels= "Outliers are:",col='gray')
+text(x= 10, y= 0.75, 
+     labels= paste(names(bp$out)[1], 'and', names(bp$out)[2]),
+     col='gray')
+```
+
+In general, measurements and counts are prone to have outliers. It is not common to speak about outliers in categorical data since they have few levels; however, if they had many levels, we could find outliers if the variable is ordinal.
+
+From what I said above, the subjective side of finding outliers lies in the decision of **what is normal**. In the case of the boxplot, the decision has been to accept as normal the values that have a *prudent distance* from the first or last quartile. This distance is 1.5 times the difference between the quartiles (a.k.a. Interquartle Range or **IQR**). Then, if a outlier is found, the whisker ends in a position different than the actual minimum or maximal value of the data.
+
+<span style="color:red"> Exercise:<br> Do some research and make a histogram and a density plot using ggplot for the variable we just used above.
+</span>
+
+
+-->
+
+<!--Cleaning the data to better represent the distribution -->
+
+```{r data_cleaning, include=FALSE, eval=FALSE}
+#install.packages("Hmisc")
+#library(Hmisc)
+#I don't think that the upper and lower ratios are accurate - replacing those over the 95th percentile with the median
+describe(eduwa4$Student.Teacher.Ratio)
+#eduwa4$Student.Teacher.Ratio[eduwa4$Student.Teacher.Ratio>26.1] <- 18.3
+#eduwa4$Student.Teacher.Ratio[eduwa4$Student.Teacher.Ratio<11.0] <- 18.3
+
+```
+
+####**Exercise 5**: Histogram and density plot of student to teacher ratio
+
+
+Constructing a histogram using ggplot
+
+```{r histogram_ggplot, include=TRUE, warning=FALSE}
+
+hist_title="Histogram of student to teacher ratio in WA"
+
+base = ggplot(data=eduwa4, aes(Student.Teacher.Ratio))
+
+hist1 = base + geom_histogram(breaks=seq(10, 30, by=1),
+                              col="darkblue",
+                              fill="blue",
+                              alpha=.2) + 
+              labs(title=hist_title, x="Student Teacher Ratio", y="Count") +
+              xlim(c(8,30)) + ylim(c(0, 400)) +
+  
+              theme(panel.grid.minor=element_blank(),
+                    panel.background=element_rect(fill="gray98"),
+                    plot.title=element_text(hjust=0.5))
+  
+hist1
+
+```
+
+
+Using ggplot to create a density plot
+
+```{r density_plot, include=TRUE, warning=FALSE}
+
+dp_title="Density plot of student to teacher ratio in WA"
+
+base = ggplot(eduwa4, aes(x=eduwa4$Student.Teacher.Ratio)) 
+
+density1 = base + geom_vline(aes(xintercept=mean(eduwa4$Student.Teacher.Ratio)),
+                                              color="blue", linetype="dashed", size=1)  + 
+                  geom_density(color="darkblue", fill="lightblue", alpha=0.2) +
+  
+                   labs(title=dp_title, x="Student Teacher Ratio", y="Density") +
+                     xlim(c(5,35)) + ylim(c(0, 0.20)) +
+  
+                 theme(panel.grid.minor=element_blank(),
+                       #panel.grid.major=element_blank(),
+                       panel.backgroun=element_rect(fill="gray98"),
+                    plot.title=element_text(hjust=0.5))
+               
+
+density1
+```
+
+
+
+
